@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.huhu.contract.mapper.ContractMapper">
+
+    <!-- 通用字段列表 -->
+    <sql id="Base_Column_List">
+        id, contract_no, contract_name, party_a, party_b, contract_amount,
+        sign_date, start_date, end_date, status, content, remark,
+        is_deleted, create_time, update_time
+    </sql>
+
+    <!-- 新增合同 -->
+    <insert id="insert" parameterType="org.huhu.contract.entity.ContractEntity"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_contract (
+            contract_no, contract_name, party_a, party_b, contract_amount,
+            sign_date, start_date, end_date, status, content, remark,
+            is_deleted, create_time, update_time
+        ) VALUES (
+            #{contractNo}, #{contractName}, #{partyA}, #{partyB}, #{contractAmount},
+            #{signDate}, #{startDate}, #{endDate}, #{status}, #{content}, #{remark},
+            #{isDeleted}, #{createTime}, #{updateTime}
+        )
+    </insert>
+
+    <!-- 修改合同 -->
+    <update id="updateById" parameterType="org.huhu.contract.entity.ContractEntity">
+        UPDATE t_contract
+        <set>
+            <if test="contractNo != null">contract_no = #{contractNo},</if>
+            <if test="contractName != null">contract_name = #{contractName},</if>
+            <if test="partyA != null">party_a = #{partyA},</if>
+            <if test="partyB != null">party_b = #{partyB},</if>
+            <if test="contractAmount != null">contract_amount = #{contractAmount},</if>
+            <if test="signDate != null">sign_date = #{signDate},</if>
+            <if test="startDate != null">start_date = #{startDate},</if>
+            <if test="endDate != null">end_date = #{endDate},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = #{updateTime}
+        </set>
+        WHERE id = #{id} AND is_deleted = 0
+    </update>
+
+    <!-- 根据ID查询合同 -->
+    <select id="selectById" resultType="org.huhu.contract.entity.ContractEntity">
+        SELECT <include refid="Base_Column_List"/>
+        FROM t_contract
+        WHERE id = #{id}
+    </select>
+
+    <!-- 逻辑删除合同 -->
+    <update id="deleteById">
+        UPDATE t_contract
+        SET is_deleted = 1, update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+</mapper>
