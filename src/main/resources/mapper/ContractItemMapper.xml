@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.huhu.contract.mapper.ContractItemMapper">
+
+    <sql id="Base_Column_List">
+        id, contract_id, product_name, quantity, unit_price, total_price, unit, specification
+    </sql>
+
+    <!-- 批量插入明细 -->
+    <insert id="insertBatch" parameterType="list" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO contract_items (
+            contract_id, product_name, quantity, unit_price, total_price, unit, specification
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.contractId}, #{item.productName}, #{item.quantity},
+                #{item.unitPrice}, #{item.totalPrice}, #{item.unit}, #{item.specification}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据合同ID查询明细 -->
+    <select id="selectByContractId" resultType="org.huhu.contract.entity.ContractItemEntity">
+        SELECT <include refid="Base_Column_List"/>
+        FROM contract_items
+        WHERE contract_id = #{contractId}
+    </select>
+
+    <!-- 根据合同ID删除明细 -->
+    <delete id="deleteByContractId">
+        DELETE FROM contract_items WHERE contract_id = #{contractId}
+    </delete>
+
+</mapper>

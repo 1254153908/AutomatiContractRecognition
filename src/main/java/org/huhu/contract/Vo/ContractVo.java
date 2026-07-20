@@ -1,28 +1,25 @@
 package org.huhu.contract.Vo;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
-/**
- * 合同视图对象 - 返回给前端
- */
 @Data
 public class ContractVo {
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long id;
     private String contractNo;
-    private String contractName;
+    private String projectName;
     private String partyA;
     private String partyB;
-    private BigDecimal contractAmount;
     private LocalDate signDate;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private BigDecimal totalAmount;
+    private String filePath;
     private Integer status;
-    private String content;
-    private String remark;
-    private LocalDateTime createTime;
-    private LocalDateTime updateTime;
+    private LocalDateTime createdAt;
+    private List<ContractItemVo> items;
 }

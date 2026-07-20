@@ -1,0 +1,15 @@
+# ============================================================
+# 文件: requirements.txt
+# 作用: 项目依赖清单（类似 Java 的 pom.xml 中的 <dependencies>）
+# 用法: pip install -r requirements.txt
+# ============================================================
+fastapi[standard]      # Web 框架 + 官方 CLI（fastapi dev）/ uvicorn / pydantic 等
+pydantic               # 数据校验（类似 Java Bean Validation / @Valid）
+pydantic-settings      # 配置管理（类似 @ConfigurationProperties，读取 .env）
+python-multipart       # 处理文件上传（类似 Spring 的 MultipartFile）
+openai                 # 大模型调用（app/ai 使用）
+python-dotenv          # 加载 .env（openai 客户端依赖）
+PyMuPDF                # PDF 文本提取与表格检测（用于筛选目标页面）
+
+# 开发/测试依赖
+pytest                 # 单元测试（类似 JUnit）

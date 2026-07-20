@@ -1,0 +1,134 @@
+schema: spec-driven
+
+# ============================================================
+# 项目上下文：所有内容均从现有代码中提取，未创造新规则
+# 提取来源：pom.xml / application.yml / docker-compose.yml /
+#   common/R.java / controller / service / entity / Bo / Vo /
+#   mapper / sql/init.sql
+# ============================================================
+
+context: |
+  ## 技术栈与依赖版本约束（来源：pom.xml、docker/docker-compose.yml、frontend/package.json）
+  - 语言/编译目标：Java 17（maven.compiler.source/target=17），源码编码 UTF-8
+  - 框架：Spring Boot 3.2.0（spring-boot-starter-parent），spring-boot-starter-web
+  - ORM：MyBatis-Plus 3.5.5（com.baomidou:mybatis-plus-spring-boot3-starter）—— 注意是 boot3 starter，与 Spring Boot 3.x 配套，不可降级到 mybatis-plus-boot-starter
+  - 数据库驱动：com.mysql:mysql-connector-j（runtime，版本由 Spring Boot 父 POM 托管）
+  - 工具：Lombok（optional=true，打包时由 spring-boot-maven-plugin exclude）
+  - 测试：spring-boot-starter-test（test scope）
+  - 中间件版本（docker-compose）：MySQL 8.0.42、Redis 7.2.8、MinIO RELEASE.2025-04-22T22-12-26Z（注释明确标注不可升级，为最后未阉割版本）
+  - 前端：Vue ^3.4.0 + Vite ^5.0.0 + @vitejs/plugin-vue ^5.0.0
+  - 运行端口：server.port=1005；MySQL 宿主映射 3307->3306，库名 contract_db，时区 Asia/Shanghai
+  - 文件上传限制：max-file-size=20MB，max-request-size=50MB
+
+  ## 统一 API 返回格式（来源：org.huhu.contract.common.R<T>）
+  - 统一响应类 R<T>，三个字段：int code、String msg、T data；构造器私有，通过静态工厂创建
+  - 成功：R.ok() / R.ok(data) / R.ok(msg, data) —— code=200，msg 默认 "成功"
+  - 失败：R.fail(msg) —— code 默认 500；R.fail(code, msg) —— 自定义 code
+  - 失败时 data 恒为 null
+  - Controller 方法返回类型统一为 R<XxxVo> 或 R<List<XxxVo>> 或 R<Void>
+
+  ## 错误码规则（来源：R.java、ContractController.java、ContractService.java —— 项目无全局异常处理器）
+  - 200 = 成功
+  - 404 = 资源不存在（仅 getById 中查不到合同时使用 R.fail(404, "合同不存在")）
+  - 500 = 默认业务/异常失败（R.fail(msg) 不传 code 时即为 500）
+  - 当前无枚举式错误码体系，code 为硬编码内联值；如需扩展请沿用 200/4xx/5xx 语义，不要引入与 HTTP 语义冲突的自定义段
+  - 错误消息格式约定：Controller 层 "<业务动作>失败：" + e.getMessage()
+      示例："合同登记失败：xxx"、
+  "合同修改失败：xxx"、"合同删除失败：xxx"、"查询失败：xxx"
+  - 业务校验失败：Service 层直接 throw new RuntimeException("中文错误描述")
+      示例："修改失败：ID不能为空"
+  - 异常处理方式：每个 Controller 方法自行 try-catch Exception 并包装为 R.fail 返回，未使用 @ControllerAdvice/@ExceptionHandler
+  - 文件上传校验失败使用 R.fail(msg)（code=500），如 "上传文件不能为空"、"不支持的文件格式..."
+
+  ## 命名规范（来源：所有现有包/类/方法/SQL）
+  ### 包名（非标准但全项目一致，新增请保持一致，不要"纠正"大小写）
+  - org.huhu.contract.Bo        —— 入参对象（首字母大写 Bo）
+  - org.huhu.contract.Vo        —— 出参对象（首字母大写 Vo）
+  - org.huhu.contract.common    —— 通用封装（R）
+  - org.huhu.contract.controller
+  - org.huhu.contract.entity
+  - org.huhu.contract.mapper
+  - org.huhu.contract.service            —— Service 接口
+  - org.huhu.contract.service.Impl       —— Service 实现（首字母大写 Impl）
+  ### 类名
+  - Entity：`<领域>Entity`，注解 @Data + @TableName("表名")
+  - 入参：`<领域>Bo`，@Data
+  - 出参：`<领域>Vo`，@Data
+  - Mapper：`<领域>Mapper`，注解 @Mapper，继承 BaseMapper<XxxEntity>
+  - Service 接口：`<领域>ServiceIntreface` —— 注意现有拼写为 "Intreface"（非 Interface），为既有事实，新增接口请沿用此拼写以保持一致
+  - Service 实现：`<领域>Service`，注解 @Service，位于 service.Impl 包
+  - Controller：`<领域>Controller`，注解 @RestController + @RequestMapping("/<资源小写单数>")
+  ### 数据库命名
+  - 表名：snake_case 复数（contracts、contract_items）；主表用复数，明细表以 _items 后缀
+  - 列名：snake_case（contract_no、party_a、created_at、total_amount）
+  - 主键：BIGINT AUTO_INCREMENT，列名 id
+  - 唯一键命名：uk_<列名>（如 uk_contract_no）
+  - 外键：ON DELETE CASCADE 级联
+  - 引擎/字符集：ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+  - 每个列均带中文 COMMENT
+  ### Java 字段与映射
+  - 字段 camelCase，依赖 mybatis-plus map-underscore-to-camel-case=true 自动映射
+  - Long 类型主键/外键一律加 @JsonFormat(shape = JsonFormat.Shape STRING)，序列化为字符串，避免前端 JS 精度丢失
+  - 金额：Java 用 BigDecimal，DB 用 DECIMAL(15,2)
+  - 日期：签约日 LocalDate，创建时间 LocalDateTime（DB 分别为 DATE / DATETIME）
+  - 状态字段：Integer，DB 为 TINYINT，约定 0=待处理 1=已识别 2=已完成（见 ContractEntity.status 注释与 init.sql）
+
+  ## Controller / API 约定（来源：ContractController.java）
+  - 类级 @RequestMapping("/<资源单数小写>")，如 /contract
+  - CRUD 路由约定：
+      POST   /contract          —— 新增（@PostMapping，无子路径）
+      PUT    /contract          —— 修改（@PutMapping，无子路径）
+      GET    /contract/{id}     —— 单查（@PathVariable Long id）
+      DELETE /contract/{id}     —— 删除
+      GET    /contract/list     —— 列表查询（无分页）
+  - 入参：@RequestBody XxxBo；文件上传用 @RequestParam("file") MultipartFile
+  - 返回：R<XxxVo> / R<List<XxxVo>> / R<Void> / R<Map<String,Object>>
+  - 依赖注入：构造器注入（不使用字段级 @Autowired）
+  - 文件上传：校验扩展名用正则 `\\.(pdf|jpg|jpeg|png|bmp|gif|webp)$`（小写匹配），
+    保存文件名 = UUID.randomUUID().replace("-","") + 原扩展名，保存目录由 ${file.upload-dir:uploads/} 配置
+
+  ## Service 层约定（来源：ContractService.java、ContractServiceIntreface.java）
+  - 接口方法用 /** 中文注释 */ 描述用途（如 /** 登记合同 */）
+  - 写操作（add/update/delete）加 @Transactional
+  - BO <-> Entity <-> VO 转换统一使用 Spring 的 BeanUtils.copyProperties(src, target)
+  - 主从表（合同 + 明细）写策略：
+      新增：先 insert 主表拿到 id，再批量 insert 明细
+      修改：先 updateById 主表，对明细采用"先删后插"全量刷新（deleteByContractId + insertBatch）
+      删除：仅 deleteById 主表，依赖 DB 外键 ON DELETE CASCADE 级联删明细
+  - 查询不存在时 getContractById 返回 null（由 Controller 转为 R.fail(404,...)）
+  - listAll：循环每个主表实体再单独查明细（现有实现为 N+1，简单实现，非性能优化范式）
+  - 明细批量插入：自定义 mapper 方法 insertBatch(@Param("list") List)，XML 用 <foreach> 拼接 VALUES
+  - createdAt 在代码中 setCreatedAt(LocalDateTime.now())，DB 也有 DEFAULT CURRENT_TIMESTAMP 兜底
+
+  ## MyBatis-Plus / Mapper 约定（来源：application.yml、mapper/*.xml、*Mapper.java）
+  - 启动类 @MapperScan("org.huhu.contract.mapper")
+  - mapper-locations: classpath:mapper/*.xml
+  - type-aliases-package: org.huhu.contract.entity
+  - configuration.map-underscore-to-camel-case: true
+  - configuration.log-impl: org.apache.ibatis.logging.stdout.StdOutImpl（开发期 SQL 日志到 stdout）
+  - 简单 CRUD 直接用 BaseMapper（selectById/insert/updateById/deleteById/selectList(null)）
+  - 复杂查询/批量操作写 XML：namespace = mapper 接口全限定名，参数用 @Param，定义 <sql id="Base_Column_List"> 列清单
+  - 批量插入 useGeneratedKeys="true" keyProperty="id" 回填主键
+
+  ## 其他既有事实
+  - 启动入口：org.huhu.contract.ContractApplication，main 方法打印 "启动成功"
+  - banner：src/main/resources/banner.txt
+  - .gitignore 忽略 target/、.idea/、*.iml、.codebuddy/ 等
+  - 项目注释、错误消息、DB COMMENT 均使用中文，新增内容请保持中文
+
+# ============================================================
+# 各产物规则：均从现有代码模式提炼，用于约束 AI 生成的新 spec
+# ============================================================
+rules:
+  proposal:
+    - 用中文撰写
+    - 新增能力必须说明将复用现有 R<T> 统一响应与 Controller try-catch 模式，不要引入 @ControllerAdvice 全局异常处理器（项目当前未使用）
+    - 涉及主从表（如合同/明细）变更时，需说明是沿用"先删后插"刷新策略还是新增策略，并给出理由
+  tasks:
+    - 用中文撰写，任务粒度按"分层文件"拆分（entity / mapper(+xml) / service(+impl) / controller / sql / 前端）
+    - 涉及新表必须包含 sql/init.sql 建表任务，且遵循 InnoDB+utf8mb4+uk_/外键 CASCADE+列 COMMENT 约定
+    - 涉及新 Long 主键/外键字段必须包含加 @JsonFormat(shape=STRING) 的任务
+  spec:
+    - 用中文撰写，需求条目须与现有命名规范一致：包名首字母大写 Bo/Vo/Impl，Service 接口后缀 "ServiceIntreface"（沿用既有拼写），类后缀 Entity/Bo/Vo/Mapper/Controller
+    - API 需求须标注 HTTP 方法与路径，遵循 /<资源单数小写> 与 /list 约定，返回类型为 R<XxxVo> 形态
+    - 错误处理需求须明确 code（200/404/500）与消息前缀格式 "<业务动作>失败："，不得引入新的错误码段

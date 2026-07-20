@@ -1,29 +1,28 @@
 package org.huhu.contract.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * 合同实体 - 对应数据库表 t_contract
- */
 @Data
+@TableName("contracts")
 public class ContractEntity {
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    @TableId(type = IdType.AUTO)
     private Long id;
     private String contractNo;
-    private String contractName;
+    private String projectName;
     private String partyA;
     private String partyB;
-    private BigDecimal contractAmount;
     private LocalDate signDate;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private Integer status;             // 0-草稿 1-已签订 2-已终止
-    private String content;
-    private String remark;
-    private Integer isDeleted;          // 0-正常 1-已删除
-    private LocalDateTime createTime;
-    private LocalDateTime updateTime;
+    private BigDecimal totalAmount;
+    private String filePath;
+    private Integer status;             // 0-待处理 1-已识别 2-已完成
+    private LocalDateTime createdAt;
 }

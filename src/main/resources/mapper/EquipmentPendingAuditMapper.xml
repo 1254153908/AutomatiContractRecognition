@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.huhu.contract.mapper.EquipmentPendingAuditMapper">
+
+    <sql id="Base_Column_List">
+        id, item_id, lydwh, lydwm, zcbhqj, zcflh, zcmc, ppxh, gg,
+        sl, dj, je, jldw, cj, ggrq, created_at
+    </sql>
+
+    <!-- 批量插入设备入账记录 -->
+    <insert id="insertBatch" parameterType="list" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO equipment_pending_audit (
+            item_id, lydwh, lydwm, zcbhqj, zcflh, zcmc, ppxh, gg,
+            sl, dj, je, jldw, cj, ggrq
+        ) VALUES
+        <foreach collection="list" item="entity" separator=",">
+            (
+                #{entity.itemId}, #{entity.lydwh}, #{entity.lydwm}, #{entity.zcbhqj},
+                #{entity.zcflh}, #{entity.zcmc}, #{entity.ppxh}, #{entity.gg},
+                #{entity.sl}, #{entity.dj}, #{entity.je}, #{entity.jldw},
+                #{entity.cj}, #{entity.ggrq}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据明细ID查询设备入账记录 -->
+    <select id="selectByItemId" resultType="org.huhu.contract.entity.EquipmentPendingAuditEntity">
+        SELECT <include refid="Base_Column_List"/>
+        FROM equipment_pending_audit
+        WHERE item_id = #{itemId}
+    </select>
+
+    <!-- 根据明细ID删除设备入账记录 -->
+    <delete id="deleteByItemId">
+        DELETE FROM equipment_pending_audit WHERE item_id = #{itemId}
+    </delete>
+
+    <!-- 根据合同ID查询所有明细下的设备入账记录 -->
+    <select id="selectByContractId" resultType="org.huhu.contract.entity.EquipmentPendingAuditEntity">
+        SELECT epa.id, epa.item_id, epa.lydwh, epa.lydwm, epa.zcbhqj,
+               epa.zcflh, epa.zcmc, epa.ppxh, epa.gg,
+               epa.sl, epa.dj, epa.je, epa.jldw, epa.cj, epa.ggrq, epa.created_at
+        FROM equipment_pending_audit epa
+        INNER JOIN contract_items ci ON epa.item_id = ci.id
+        WHERE ci.contract_id = #{contractId}
+    </select>
+
+</mapper>

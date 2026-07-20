@@ -1,28 +1,61 @@
 -- 合同数据库初始化脚本
--- 创建数据库
+DROP DATABASE IF EXISTS contract_db;
 CREATE DATABASE IF NOT EXISTS contract_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
 USE contract_db;
 
--- 合同表
-CREATE TABLE IF NOT EXISTS t_contract (
-    id              BIGINT          NOT NULL AUTO_INCREMENT  COMMENT '主键ID',
-    contract_no     VARCHAR(64)     DEFAULT NULL             COMMENT '合同编号',
-    contract_name   VARCHAR(255)    NOT NULL                 COMMENT '合同名称',
-    party_a         VARCHAR(255)    DEFAULT NULL             COMMENT '甲方',
-    party_b         VARCHAR(255)    DEFAULT NULL             COMMENT '乙方',
-    contract_amount DECIMAL(18,2)   DEFAULT NULL             COMMENT '合同金额',
-    sign_date       DATE            DEFAULT NULL             COMMENT '签订日期',
-    start_date      DATE            DEFAULT NULL             COMMENT '合同开始日期',
-    end_date        DATE            DEFAULT NULL             COMMENT '合同结束日期',
-    status          TINYINT         DEFAULT 0                COMMENT '状态: 0-草稿 1-已签订 2-已终止',
-    content         TEXT            DEFAULT NULL             COMMENT '合同内容',
-    remark          VARCHAR(500)    DEFAULT NULL             COMMENT '备注',
-    is_deleted      TINYINT         DEFAULT 0                COMMENT '逻辑删除: 0-正常 1-已删除',
-    create_time     DATETIME        DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    update_time     DATETIME        DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_contract_no (contract_no),
-    KEY idx_status (status),
-    KEY idx_is_deleted (is_deleted)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='合同表';
+-- 1. 合同主表
+CREATE TABLE IF NOT EXISTS contracts (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    contract_no VARCHAR(50) NOT NULL COMMENT '合同编号',
+    project_name VARCHAR(200) COMMENT '项目名称',
+    party_a VARCHAR(100) COMMENT '甲方',
+    party_b VARCHAR(100) COMMENT '乙方',
+    sign_date DATE COMMENT '签约日期',
+    total_amount DECIMAL(15,2) DEFAULT 0.00 COMMENT '合同总价',
+    file_path VARCHAR(255) COMMENT 'PDF文件存储路径',
+    status TINYINT DEFAULT 0 COMMENT '0:待处理 1:已识别 2:已完成',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_contract_no (contract_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+DROP TABLE IF EXISTS contract_items;
+-- 2. 合同明细表
+CREATE TABLE IF NOT EXISTS contract_items (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    contract_id BIGINT NOT NULL COMMENT '关联合同ID',
+    product_name VARCHAR(200) COMMENT '产品名称',
+    quantity INT DEFAULT 0 COMMENT '数量',
+    unit_price DECIMAL(15,2) DEFAULT 0.00 COMMENT '单价',
+    total_price DECIMAL(15,2) DEFAULT 0.00 COMMENT '合价',
+    unit VARCHAR(255) COMMENT '单位',
+    specification VARCHAR(255) COMMENT '规格/型号',
+    FOREIGN KEY (contract_id) REFERENCES contracts (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+DROP TABLE IF EXISTS equipment_pending_audit;
+-- 3. 设备入账未审核表（每条合同明细对应一个或多个设备入账记录）
+CREATE TABLE IF NOT EXISTS equipment_pending_audit (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    item_id BIGINT NOT NULL COMMENT '关联合同明细ID（contract_items.id）',
+    lydwh VARCHAR(10) NOT NULL COMMENT '使用单位号（辅关键字，不能为空）',
+    lydwm VARCHAR(60) DEFAULT '' COMMENT '使用单位名',
+    zcbhqj VARCHAR(30) NOT NULL DEFAULT '' COMMENT '设备编号区间（不能为空）',
+    zcflh VARCHAR(8) NOT NULL COMMENT '分类号（关键字，不能为空）',
+    zcmc VARCHAR(40) NOT NULL COMMENT '设备名称（不能为空）',
+    ppxh VARCHAR(30) NOT NULL DEFAULT '*' COMMENT '品牌型号（不能为空，无则填*）',
+    gg VARCHAR(50) NOT NULL DEFAULT '*' COMMENT '规格（不能为空，无则填*）',
+    sl INT DEFAULT 0 COMMENT '数量',
+    dj DECIMAL(12,2) DEFAULT 0.00 COMMENT '单价',
+    je DECIMAL(12,2) NOT NULL COMMENT '金额（辅关键字，不能为空）',
+    jldw VARCHAR(20) DEFAULT '台' COMMENT '计量单位（台/套/张/个）',
+    cj VARCHAR(40) NOT NULL DEFAULT '无' COMMENT '厂家（不能为空，无则填"无"）',
+    ggrq DATE NOT NULL COMMENT '购置日期（辅关键字，不能为空）',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    FOREIGN KEY (item_id) REFERENCES contract_items (id) ON DELETE CASCADE,
+    INDEX idx_item_id (item_id),
+    INDEX idx_lydwh (lydwh),
+    INDEX idx_zcflh (zcflh)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='设备入账未审核表';

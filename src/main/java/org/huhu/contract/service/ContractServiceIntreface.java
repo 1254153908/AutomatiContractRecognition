@@ -1,30 +1,35 @@
 package org.huhu.contract.service;
 
 import org.huhu.contract.Bo.ContractBo;
+import org.huhu.contract.Bo.EquipmentPendingAuditBo;
 import org.huhu.contract.Vo.ContractVo;
+import org.huhu.contract.Vo.EquipmentPendingAuditVo;
 
-/**
- * 合同服务接口
- */
+import java.util.List;
+
 public interface ContractServiceIntreface {
 
-    /**
-     * 新增合同
-     */
+    /** 登记合同 */
     ContractVo addContract(ContractBo bo);
 
-    /**
-     * 修改合同
-     */
+    /** 修改合同 */
     ContractVo updateContract(ContractBo bo);
 
-    /**
-     * 根据ID查询合同
-     */
+    /** 查询合同（含明细） */
     ContractVo getContractById(Long id);
 
-    /**
-     * 删除合同（逻辑删除）
-     */
+    /** 查询所有合同列表 */
+    List<ContractVo> listAll();
+
+    /** 删除合同（级联删除明细） */
     void deleteContract(Long id);
+
+    /** 根据明细ID查询设备入账未审核记录 */
+    List<EquipmentPendingAuditVo> getAuditsByItemId(Long itemId);
+
+    /** 保存/更新某条明细的设备入账未审核记录（先删后插） */
+    List<EquipmentPendingAuditVo> saveAudits(Long itemId, List<EquipmentPendingAuditBo> audits);
+
+    /** 根据合同ID查询所有设备入账未审核记录 */
+    List<EquipmentPendingAuditVo> getAuditsByContractId(Long contractId);
 }

@@ -1,20 +1,33 @@
 server:
-  port: 8080
+  port: 1005
 
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/contract_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3307/contract_db?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
-    password: root
+    password: eng123
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 50MB
 
-mybatis:
-  # Mapper XML 文件路径
+mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
-  # 实体类别名包（XML中可直接使用类名）
   type-aliases-package: org.huhu.contract.entity
   configuration:
-    # 下划线转驼峰
     map-underscore-to-camel-case: true
-    # SQL日志输出
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+myminio:
+  endpoint: http://localhost:9000
+  accessKey: QqWDatJ1dbIKT0tbGkIy
+  secretKey: tZF2d2OV4spv4gy37bynEHIjMYS26bDoKrY7Ze8s
+
+python:
+  # Python 合同识别服务地址（FastAPI：POST /api/v1/contract/recognize）
+  ocr-url: http://localhost:8000/api/v1/contract/recognize
+
+file:
+  upload-dir: D:/contract-uploads/
+
