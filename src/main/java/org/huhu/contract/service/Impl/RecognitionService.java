@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.huhu.contract.Minio.Template.MyMinioTemplate;
 import org.huhu.contract.service.RecognitionServiceIntreface;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -36,7 +39,7 @@ import java.util.UUID;
 public class RecognitionService implements RecognitionServiceIntreface {
 
     private final MyMinioTemplate minioTemplate;
-    private final RestClient restClient;
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
     /** 本地暂存目录（绝对路径，已在 application.yml 配好，如 D:/contract-uploads/） */
@@ -48,13 +51,13 @@ public class RecognitionService implements RecognitionServiceIntreface {
     private String pythonOcrUrl;
 
     public RecognitionService(MyMinioTemplate minioTemplate,
-                              RestClient.Builder restClientBuilder,
+                              RestTemplateBuilder restTemplateBuilder,
                               ObjectMapper objectMapper) {
         this.minioTemplate = minioTemplate;
         this.objectMapper = objectMapper;
         // Python 走大模型识别可能较慢，给足读取超时（120s）
-        this.restClient = restClientBuilder
-                .requestFactory(ocrRequestFactory())
+        this.restTemplate = restTemplateBuilder
+                .requestFactory(() -> ocrRequestFactory())
                 .build();
     }
 
@@ -142,7 +145,7 @@ public class RecognitionService implements RecognitionServiceIntreface {
      */
     @SuppressWarnings("unchecked")
     private Map<String, Object> callPythonOcr(String minioUrl, String originalName) {
-        if (pythonOcrUrl == null || pythonOcrUrl.isBlank()) {
+        if (pythonOcrUrl == null || pythonOcrUrl.trim().isEmpty()) {
             throw new IllegalStateException("未配置 python.ocr-url，无法调用 Python 识别服务");
         }
 
@@ -154,12 +157,10 @@ public class RecognitionService implements RecognitionServiceIntreface {
         // 2. 发送请求并取回原始 JSON
         String respJson;
         try {
-            respJson = restClient.post()
-                    .uri(pythonOcrUrl)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(reqBody)
-                    .retrieve()
-                    .body(String.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, String>> entity = new HttpEntity<>(reqBody, headers);
+            respJson = restTemplate.postForObject(pythonOcrUrl, entity, String.class);
         } catch (Exception e) {
             throw new RuntimeException("调用 Python 识别服务失败：" + e.getMessage(), e);
         }

@@ -1,44 +1,51 @@
 <template>
-  <div class="upload-section">
-    <div
-      class="upload-area"
-      :class="{ dragover }"
-      @dragover.prevent="dragover = true"
-      @dragleave.prevent="dragover = false"
-      @drop.prevent="onDrop"
-    >
+  <BaseCard title="上传识别">
+    <div class="upload-body">
+      <div
+        class="upload-area"
+        :class="{ dragover }"
+        @dragover.prevent="dragover = true"
+        @dragleave.prevent="dragover = false"
+        @drop.prevent="onDrop"
+      >
       <input
         type="file"
         ref="fileInput"
         accept=".pdf,image/*"
         @change="onFileChange"
       />
-      <div class="upload-icon">📄</div>
+      <div class="upload-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 16V4"></path>
+          <path d="M7 9l5-5 5 5"></path>
+          <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path>
+        </svg>
+      </div>
       <div class="upload-tip">
         点击或拖拽 <span>PDF / 图片</span> 到此处上传识别
       </div>
       <div class="upload-sub-tip">支持格式：PDF、JPG、PNG、JPEG、BMP</div>
     </div>
 
-    <!-- 文件预览 -->
+    <!-- 文件预览（不使用图片预览，改用类型色块） -->
     <div v-if="file" class="file-preview">
-      <img v-if="previewUrl" :src="previewUrl" alt="预览" />
-      <div v-else class="file-icon">📄 PDF</div>
+      <div class="filechip" :class="fileKind === 'IMG' ? 'filechip--img' : 'filechip--pdf'">{{ fileKind }}</div>
       <div class="file-info">
         <div class="file-name">{{ file.name }}</div>
         <div class="file-size">{{ formatSize(file.size) }}</div>
       </div>
-      <button class="btn btn-secondary" @click="clearFile">清除</button>
-      <button class="btn" @click="uploadAndRecognize" :disabled="uploading">
+      <BaseButton variant="ghost" size="sm" @click="clearFile">清除</BaseButton>
+      <BaseButton variant="primary" size="sm" :disabled="uploading" @click="uploadAndRecognize">
         {{ uploading ? '识别中...' : '开始识别' }}
-      </button>
+      </BaseButton>
     </div>
 
     <!-- 识别状态 -->
     <div v-if="statusText" class="recognize-status" :class="statusType">
       {{ statusText }}
     </div>
-  </div>
+    </div>
+  </BaseCard>
 </template>
 
 <script>
@@ -47,8 +54,10 @@
  * 选择/拖拽 PDF 或图片后调用后端 /recognize，识别成功后通过 recognized 事件
  * 把结构化结果抛给父组件（App → ContractForm 自动回填）。
  */
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { recognizeFile } from '../api/contract.js'
+import BaseCard from './base/BaseCard.vue'
+import BaseButton from './base/BaseButton.vue'
 
 export default {
   name: 'FileUpload',
@@ -56,11 +65,17 @@ export default {
   setup(props, { emit }) {
     const fileInput = ref(null)
     const file = ref(null)
-    const previewUrl = ref('')
     const dragover = ref(false)
     const uploading = ref(false)
     const statusText = ref('')
     const statusType = ref('')
+
+    // 文件类型色块标识（PDF / IMG），避免直接渲染图片预览
+    const fileKind = computed(() => {
+      const f = file.value
+      if (!f) return ''
+      return f.type.startsWith('image/') ? 'IMG' : 'PDF'
+    })
 
     function formatSize(bytes) {
       if (bytes < 1024) return bytes + ' B'
@@ -82,12 +97,10 @@ export default {
 
     function handleFile(f) {
       file.value = f
-      previewUrl.value = f.type.startsWith('image/') ? URL.createObjectURL(f) : ''
     }
 
     function clearFile() {
       file.value = null
-      previewUrl.value = ''
       fileInput.value.value = ''
       statusText.value = ''
       statusType.value = ''
@@ -116,7 +129,7 @@ export default {
     }
 
     return {
-      fileInput, file, previewUrl, dragover, uploading,
+      fileInput, file, dragover, uploading, fileKind,
       statusText, statusType,
       onFileChange, onDrop, clearFile, uploadAndRecognize, formatSize
     }
@@ -125,82 +138,67 @@ export default {
 </script>
 
 <style scoped>
-.upload-section {
-  background: #fff;
-  border: 1px solid #ddd;
-  padding: 15px;
-  margin-bottom: 10px;
-}
+.upload-body { padding: 16px; }
 .upload-area {
-  border: 2px dashed #1e88e5;
-  border-radius: 4px;
-  padding: 30px;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--r);
+  padding: 38px 20px;
   text-align: center;
   cursor: pointer;
   position: relative;
-  transition: background 0.2s;
+  transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
 }
-.upload-area:hover, .upload-area.dragover { background: #e3f2fd; }
+.upload-area:hover,
+.upload-area.dragover {
+  border-color: var(--brand);
+  background: var(--gradient-soft);
+  box-shadow: 0 0 0 4px rgba(17,24,39,.08);
+}
 .upload-area input[type="file"] {
   position: absolute;
   left: 0; top: 0; width: 100%; height: 100%;
   opacity: 0; cursor: pointer;
 }
-.upload-icon { font-size: 36px; color: #1e88e5; margin-bottom: 8px; }
-.upload-tip { color: #666; font-size: 13px; }
-.upload-tip span { color: #1e88e5; font-weight: bold; }
-.upload-sub-tip { margin-top: 5px; color: #999; font-size: 11px; }
+.upload-icon {
+  width: 56px; height: 56px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: var(--gradient-soft);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--brand);
+}
+.upload-icon svg { width: 28px; height: 28px; }
+.upload-tip { color: var(--text-2); font-size: 14px; }
+.upload-tip span { color: var(--brand); font-weight: 600; }
+.upload-sub-tip { margin-top: 6px; color: var(--text-muted); font-size: 12px; }
+
 .file-preview {
-  margin-top: 10px;
+  margin-top: 14px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
 }
-.file-preview img {
-  max-width: 120px;
-  max-height: 80px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
+.file-info { flex: 1; min-width: 0; }
+.file-name {
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.file-icon {
-  font-size: 24px; color: #d32f2f;
-  width: 60px; text-align: center;
-}
-.file-info { flex: 1; }
-.file-name { font-weight: bold; color: #333; }
-.file-size { color: #999; margin-top: 2px; }
-.btn {
-  padding: 5px 14px;
-  border: 1px solid #1e88e5;
-  background: #1e88e5;
-  color: #fff;
-  cursor: pointer;
-  font-size: 12px;
-  border-radius: 3px;
-}
-.btn:hover { background: #1565c0; }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-secondary {
-  background: #fff;
-  color: #333;
-  border: 1px solid #ccc;
-}
-.btn-secondary:hover { background: #f0f0f0; }
+.file-size { color: var(--text-muted); margin-top: 2px; font-size: 12px; }
+
 .recognize-status {
-  margin-top: 8px;
-  padding: 6px 10px;
-  border-radius: 3px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
 }
-.recognize-status.loading {
-  background: #fff8e1; color: #f57c00;
-  border: 1px solid #ffcc80;
-}
-.recognize-status.success {
-  background: #e8f5e9; color: #2e7d32;
-  border: 1px solid #a5d6a7;
-}
-.recognize-status.error {
-  background: #ffebee; color: #c62828;
-  border: 1px solid #ef9a9a;
-}
+.recognize-status.loading { background: var(--warning-bg); color: var(--warning); border: 1px solid #fde68a; }
+.recognize-status.success { background: var(--success-bg); color: var(--success); border: 1px solid #a7f3d0; }
+.recognize-status.error  { background: var(--danger-bg); color: var(--danger); border: 1px solid #fecaca; }
 </style>

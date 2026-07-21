@@ -1,73 +1,56 @@
 <template>
-  <div class="form-section">
-    <div class="form-header">
-      {{ contractId ? '编辑合同' : '新增合同' }}（*为必填项）
-    </div>
+  <BaseCard>
+    <template #header>
+      <span>{{ contractId ? '编辑合同' : '新增合同' }}</span>
+      <span class="req-hint">* 为必填项</span>
+    </template>
 
     <!-- 合同基本信息 -->
     <div class="form-body">
       <div class="form-row">
-        <div class="form-group">
-          <label class="form-label required">合同编号</label>
-          <input type="text" v-model="form.contractNo" placeholder="请输入合同编号" />
-        </div>
-        <div class="form-group">
-          <label class="form-label required">项目名称</label>
-          <input type="text" v-model="form.projectName" placeholder="请输入项目名称" />
-        </div>
-        <div class="form-group">
-          <label class="form-label required">甲方</label>
-          <input type="text" v-model="form.partyA" placeholder="请输入甲方" />
-        </div>
-        <div class="form-group">
-          <label class="form-label required">乙方</label>
-          <input type="text" v-model="form.partyB" placeholder="请输入乙方" />
-        </div>
-        <div class="form-group">
-          <label class="form-label required">签署日期</label>
-          <input type="date" v-model="form.signDate" />
-        </div>
-        <div class="form-group">
-          <label class="form-label required">总金额(元)</label>
-          <input type="number" v-model.number="form.totalAmount" step="0.01" min="0" placeholder="请输入总金额" />
-        </div>
+        <FormField label="合同编号" required><input type="text" v-model="form.contractNo" placeholder="请输入合同编号" /></FormField>
+        <FormField label="项目名称" required><input type="text" v-model="form.projectName" placeholder="请输入项目名称" /></FormField>
+        <FormField label="甲方" required><input type="text" v-model="form.partyA" placeholder="请输入甲方" /></FormField>
+        <FormField label="乙方" required><input type="text" v-model="form.partyB" placeholder="请输入乙方" /></FormField>
+        <FormField label="签署日期" required><input type="date" v-model="form.signDate" /></FormField>
+        <FormField label="总金额(元)" required><input type="number" v-model.number="form.totalAmount" step="0.01" min="0" placeholder="请输入总金额" /></FormField>
       </div>
     </div>
 
     <!-- 合同明细 -->
-    <div class="form-header" style="background:#fff;border-bottom:1px solid #eee;">
+    <div class="sub-header">
       <span>合同明细</span>
-      <button class="btn btn-sm" @click="addItem">+ 添加明细</button>
+      <BaseButton variant="primary" size="sm" @click="addItem">+ 添加明细</BaseButton>
     </div>
-    <div class="table-wrap">
+    <div class="table-scroll">
       <table class="item-table">
         <thead>
           <tr>
-            <th style="width:50px;">序号</th>
+            <th style="width:54px;">序号</th>
             <th>产品名称</th>
-            <th style="width:90px;">数量</th>
+            <th style="width:96px;">数量</th>
             <th style="width:120px;">单价(元)</th>
             <th style="width:120px;">总价(元)</th>
             <th style="width:80px;">单位</th>
             <th>型号</th>
-            <th style="width:110px;">操作</th>
+            <th style="width:120px;">操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="form.items.length === 0">
-            <td colspan="9" class="empty-tip">暂无明细，请点击"添加明细"</td>
+            <td colspan="8" class="u-empty">暂无明细，请点击“添加明细”</td>
           </tr>
           <tr v-for="(item, index) in form.items" :key="index">
-            <td class="text-center">{{ index + 1 }}</td>
+            <td class="u-text-center">{{ index + 1 }}</td>
             <td><input type="text" v-model="item.productName" placeholder="请输入" /></td>
             <td><input type="number" v-model.number="item.quantity" min="1" /></td>
             <td><input type="number" v-model.number="item.unitPrice" step="0.01" min="0" @input="calcTotal(item)" /></td>
             <td><input type="number" v-model.number="item.totalPrice" step="0.01" min="0" /></td>
             <td><input type="text" v-model="item.unit" placeholder="" /></td>
             <td><input type="text" v-model="item.specification" placeholder="" /></td>
-            <td class="text-center">
-              <button class="btn-audit" @click="openAudit(item)">设备入账</button>
-              <button class="btn-del" @click="removeItem(index)">删除</button>
+            <td class="u-text-center cell-actions">
+              <BaseButton variant="ghost" size="sm" @click="openAudit(item)">设备入账</BaseButton>
+              <BaseButton variant="danger" size="sm" @click="removeItem(index)">删除</BaseButton>
             </td>
           </tr>
         </tbody>
@@ -76,8 +59,8 @@
 
     <!-- 底部按钮 -->
     <div class="form-footer">
-      <button class="btn" @click="submitForm">{{ contractId ? '修改保存' : '保存数据' }}</button>
-      <button class="btn btn-secondary" @click="resetForm">重置页面</button>
+      <BaseButton variant="primary" @click="submitForm">{{ contractId ? '修改保存' : '保存数据' }}</BaseButton>
+      <BaseButton variant="ghost" @click="resetForm">重置表单</BaseButton>
     </div>
 
     <!-- 设备入账编辑弹出卡片 -->
@@ -87,7 +70,7 @@
       @close="auditVisible = false"
       @update="onAuditUpdate"
     />
-  </div>
+  </BaseCard>
 </template>
 
 <script>
@@ -99,6 +82,9 @@
  */
 import { reactive, ref, watch, toRaw } from 'vue'
 import { addContract, updateContract, getContract } from '../api/contract.js'
+import BaseCard from './base/BaseCard.vue'
+import BaseButton from './base/BaseButton.vue'
+import FormField from './base/FormField.vue'
 import EquipmentAuditForm from './EquipmentAuditForm.vue'
 
 // —— 表单工厂：保证每次重置都是干净对象 ——
@@ -136,7 +122,7 @@ const requiredFields = [
 
 export default {
   name: 'ContractForm',
-  components: { EquipmentAuditForm },
+  components: { BaseCard, BaseButton, FormField, EquipmentAuditForm },
   props: {
     contractId: { type: [Number, String], default: null },
     recognizedData: { type: Object, default: () => ({}) }
@@ -274,142 +260,75 @@ export default {
 </script>
 
 <style scoped>
-.form-section {
-  background: #fff;
-  border: 1px solid #ddd;
-}
-.form-header {
-  background: #eef4fa;
-  padding: 6px 10px;
-  font-weight: bold;
-  color: #333;
-  border-bottom: 1px solid #ddd;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-}
-.form-body { padding: 10px; }
+.req-hint { margin-left: 8px; font-size: 12px; font-weight: 400; color: var(--text-muted); }
+
+.form-body { padding: 16px; }
 .form-row {
   display: flex;
   flex-wrap: wrap;
+  gap: 14px;
 }
-.form-group {
-  width: 50%;
+.field { flex: 1 1 calc(50% - 7px); min-width: 240px; }
+
+/* 明细子标题（非主标题，无渐变条） */
+.sub-header {
   display: flex;
-  border-bottom: 1px solid #eee;
-  border-right: 1px solid #eee;
-  min-height: 32px;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
 }
-.form-group:nth-child(2n) { border-right: none; }
-.form-label {
-  width: 90px;
-  background: #f9f9f9;
-  padding: 6px 8px;
-  text-align: right;
-  color: #333;
-  border-right: 1px solid #eee;
-  flex-shrink: 0;
-  font-size: 12px;
-}
-.form-label.required::before {
-  content: "*";
-  color: #d32f2f;
-  margin-right: 2px;
-}
-.form-group input {
-  flex: 1;
-  border: 1px solid #ccc;
-  padding: 3px 5px;
-  font-size: 12px;
-  outline: none;
-  font-family: inherit;
-  margin: 3px 5px;
-}
-.form-group input:focus { border-color: #1e88e5; }
 
 /* 明细表格 */
-.table-wrap { padding: 0 10px 10px; }
+.table-scroll { overflow-x: auto; padding: 0 14px 14px; }
 .item-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 13px;
 }
 .item-table th {
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  padding: 5px 4px;
-  font-weight: bold;
-  text-align: center;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 10px;
+  text-align: left;
+  white-space: nowrap;
 }
 .item-table td {
-  border: 1px solid #ddd;
-  padding: 2px 4px;
+  border-bottom: 1px solid var(--border);
+  padding: 6px 8px;
 }
 .item-table td input {
   width: 100%;
-  border: 1px solid #ccc;
-  padding: 3px 4px;
-  font-size: 12px;
-  outline: none;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 7px 9px;
+  font-size: 13px;
   font-family: inherit;
+  color: var(--text);
+  outline: none;
   box-sizing: border-box;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
-.item-table td input:focus { border-color: #1e88e5; }
-.empty-tip {
-  text-align: center;
-  color: #999;
-  padding: 16px;
+.item-table td input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(17,24,39,.12);
 }
-.text-center { text-align: center; }
-.btn-audit {
-  padding: 2px 8px;
-  border: 1px solid #2e7d32;
-  background: #fff;
-  color: #2e7d32;
-  cursor: pointer;
-  font-size: 12px;
-  border-radius: 2px;
-  margin: 0 1px;
-}
-.btn-audit:hover { background: #e8f5e9; }
-.btn-del {
-  padding: 2px 8px;
-  border: 1px solid #d32f2f;
-  background: #fff;
-  color: #d32f2f;
-  cursor: pointer;
-  font-size: 12px;
-  border-radius: 2px;
-  margin: 0 1px;
-}
-.btn-del:hover { background: #ffebee; }
+.cell-actions { white-space: nowrap; }
 
-/* 底部 */
 .form-footer {
   display: flex;
   justify-content: flex-end;
-  padding: 10px;
-  gap: 8px;
-  background: #f9f9f9;
-  border-top: 1px solid #ddd;
+  padding: 14px;
+  gap: 10px;
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
 }
-.btn {
-  padding: 5px 14px;
-  border: 1px solid #1e88e5;
-  background: #1e88e5;
-  color: #fff;
-  cursor: pointer;
-  font-size: 12px;
-  border-radius: 3px;
-}
-.btn:hover { background: #1565c0; }
-.btn-secondary {
-  background: #fff;
-  color: #333;
-  border: 1px solid #ccc;
-}
-.btn-secondary:hover { background: #f0f0f0; }
-.btn-sm { padding: 2px 10px; font-size: 11px; }
 </style>

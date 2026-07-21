@@ -7,6 +7,8 @@ out/
 *.war
 *.ear
 *.nar
+*.png
+*.jpg
 !gradle/wrapper/gradle-wrapper.jar
 
 # ========== Python ==========
@@ -87,3 +89,5 @@ docker/**/sdi/
 docker/**/*.sdi
 docker/**/*.meta
 docker/**/*.1
+
+ui-base/

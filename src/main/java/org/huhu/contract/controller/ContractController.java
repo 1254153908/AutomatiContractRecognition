@@ -5,10 +5,14 @@ import org.huhu.contract.Bo.EquipmentPendingAuditBo;
 import org.huhu.contract.Vo.ContractVo;
 import org.huhu.contract.Vo.EquipmentPendingAuditVo;
 import org.huhu.contract.common.R;
+import org.huhu.contract.entity.ContractEntity;
 import org.huhu.contract.service.ContractServiceIntreface;
 import org.huhu.contract.service.RecognitionServiceIntreface;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import java.util.List;
 import java.util.Map;
@@ -69,6 +73,18 @@ public class ContractController {
     public R<List<ContractVo>> list() {
         try {
             return R.ok(contractService.listAll());
+        } catch (Exception e) {
+            return R.fail("查询失败：" + e.getMessage());
+        }
+    }
+
+    /** 分页查询合同列表 */
+    @GetMapping("/page")
+    public R<IPage<ContractVo>> page(@RequestParam(defaultValue = "1") int current,
+                                     @RequestParam(defaultValue = "10") int size) {
+        try {
+            Page<ContractEntity> page = new Page<>(current, size);
+            return R.ok(contractService.pageContracts(page));
         } catch (Exception e) {
             return R.fail("查询失败：" + e.getMessage());
         }

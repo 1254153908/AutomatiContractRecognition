@@ -1,8 +1,13 @@
 import { get, post, put, del, upload } from './request.js'
 
-/** 查询所有合同列表 */
+/** 查询所有合同列表（全量，前端搜索用） */
 export function listContracts() {
   return get('/list')
+}
+
+/** 分页查询合同列表：返回 IPage { records, total, current, size, pages } */
+export function pageContracts(current, size) {
+  return get('/page', { current, size })
 }
 
 /** 根据ID查询合同 */

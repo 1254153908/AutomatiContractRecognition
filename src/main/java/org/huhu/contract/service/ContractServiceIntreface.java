@@ -4,6 +4,10 @@ import org.huhu.contract.Bo.ContractBo;
 import org.huhu.contract.Bo.EquipmentPendingAuditBo;
 import org.huhu.contract.Vo.ContractVo;
 import org.huhu.contract.Vo.EquipmentPendingAuditVo;
+import org.huhu.contract.entity.ContractEntity;
+
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import java.util.List;
 
@@ -20,6 +24,9 @@ public interface ContractServiceIntreface {
 
     /** 查询所有合同列表 */
     List<ContractVo> listAll();
+
+    /** 分页查询合同列表 */
+    IPage<ContractVo> pageContracts(Page<ContractEntity> page);
 
     /** 删除合同（级联删除明细） */
     void deleteContract(Long id);

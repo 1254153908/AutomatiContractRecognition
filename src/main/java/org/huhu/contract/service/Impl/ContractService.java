@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -159,6 +162,32 @@ public class ContractService implements ContractServiceIntreface {
             vos.add(vo);
         }
         return vos;
+    }
+
+    @Override
+    public IPage<ContractVo> pageContracts(Page<ContractEntity> page) {
+        // 分页查主表（总数与当前页记录由 MyBatis-Plus 分页拦截器填充）
+        contractMapper.selectPage(page, null);
+
+        List<ContractVo> vos = new ArrayList<>();
+        for (ContractEntity entity : page.getRecords()) {
+            ContractVo vo = new ContractVo();
+            BeanUtils.copyProperties(entity, vo);
+            // 关联明细（与 listAll 保持一致，列表页不加载设备入账信息）
+            List<ContractItemEntity> items = itemMapper.selectByContractId(entity.getId());
+            if (!CollectionUtils.isEmpty(items)) {
+                vo.setItems(items.stream().map(it -> {
+                    ContractItemVo itemVo = new ContractItemVo();
+                    BeanUtils.copyProperties(it, itemVo);
+                    return itemVo;
+                }).collect(Collectors.toList()));
+            }
+            vos.add(vo);
+        }
+        // 用转换后的 VO 列表构造新的分页对象，保留 total/current/size 等分页信息
+        IPage<ContractVo> result = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
+        result.setRecords(vos);
+        return result;
     }
 
     @Override

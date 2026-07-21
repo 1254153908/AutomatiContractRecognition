@@ -1,23 +1,36 @@
 <template>
-  <div class="container">
-    <!-- 顶部工具栏 -->
-    <Toolbar
-      @new="startNew"
-      @save="saveData"
-      @copy="copyData"
-      @reset="resetPage"
-    />
-    <!-- 合同列表 -->
-    <ContractList ref="listRef" @edit="onEdit" />
-    <!-- 文件上传区域（仅在新增/编辑时显示） -->
-    <FileUpload v-if="showForm" @recognized="onRecognized" />
-    <!-- 表单区域 -->
-    <ContractForm
-      v-if="showForm"
-      ref="formRef"
-      :contract-id="editingId"
-      :recognized-data="recognizedData"
-    />
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="app-header__inner">
+        <div class="app-brand">
+          <div class="app-logo">资</div>
+          <div>
+            <div class="app-title">资产识别录入</div>
+            <div class="app-sub">合同识别 · 结构化录入 · 设备入账管理</div>
+          </div>
+        </div>
+        <Toolbar
+          @new="startNew"
+          @save="saveData"
+          @copy="copyData"
+          @reset="resetPage"
+        />
+      </div>
+    </header>
+
+    <main class="app-main">
+      <!-- 合同列表 -->
+      <ContractList ref="listRef" @edit="onEdit" />
+      <!-- 文件上传区域（仅在新增/编辑时显示） -->
+      <FileUpload v-if="showForm" @recognized="onRecognized" />
+      <!-- 表单区域 -->
+      <ContractForm
+        v-if="showForm"
+        ref="formRef"
+        :contract-id="editingId"
+        :recognized-data="recognizedData"
+      />
+    </main>
   </div>
 </template>
 
@@ -95,17 +108,3 @@ export default {
 }
 </script>
 
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: "Microsoft YaHei", "SimSun", sans-serif;
-  font-size: 12px;
-  color: #333;
-  background: #f5f7fa;
-}
-.container {
-  width: 1200px;
-  margin: 0 auto;
-  padding: 10px;
-}
-</style>
