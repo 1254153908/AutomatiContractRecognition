@@ -16,6 +16,6 @@ async def recognize_contract(request: ContractRecognizeRequest):
         {"minioUrl": "http://minio:9000/contract/xxx.pdf", "filename": "合同.pdf"}
     返回: BaseResponse，data 为 ContractRecognizeResponse
     '''
-    #result = ai_contract_service.ai_recognize_contract(request)
-    result = contract_service.recognize_contract(request)
+    result = ai_contract_service.ai_recognize_contract(request)
+    #result = contract_service.recognize_contract(request)
     return BaseResponse(code=200, message="ok", data=result)

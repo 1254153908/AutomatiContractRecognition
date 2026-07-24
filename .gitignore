@@ -67,6 +67,7 @@ uploads/
 *.db
 *.sqlite
 *.sqlite3
+*.docx
 
 # ========== 临时文件 ==========
 *.tmp
@@ -74,14 +75,18 @@ uploads/
 *.swp
 *~
 *#
+*.tgz
 
 # ========== CodeBuddy（项目数据） ==========
 .codebuddy/
 
 # ========== 文档（仅保留 README） ==========
-/*.md
+*.md
 !README.md
 openspec/
+
+# ========== 测试文件 ==========
+test/
 
 # ========== Docker 数据卷 ==========
 docker/**/data/

@@ -38,10 +38,10 @@ class ContractItemResponse(BaseModel):
 
 class ContractRecognizeResponse(BaseModel):
 
-    contract_no: str = Field(..., description="合同编号（唯一键 uk_contract_no）")
-    party_a: str = Field(..., description="甲方")
-    party_b: str = Field(..., description="乙方")
-    sign_date: str = Field(..., description="签约日（LocalDate，格式 YYYY-MM-DD）")
+    contract_no: Optional[str] = Field(default=None, description="合同编号（唯一键 uk_contract_no）")
+    party_a: Optional[str] = Field(default=None, description="甲方")
+    party_b: Optional[str] = Field(default=None, description="乙方")
+    sign_date: Optional[str] = Field(default=None, description="签约日（LocalDate，格式 YYYY-MM-DD）")
     total_amount: float = Field(..., description="合同总金额（BigDecimal，DECIMAL(15,2)）")
     status: int = Field(..., description="状态：0待处理 1已识别 2已完成")
     items: List[ContractItemResponse] = Field(default=[], description="合同明细列表")

@@ -85,10 +85,13 @@ Instructions:
           A. 包含关键词（合同、合计、明细、设备、规格等）
           B. 有表格且文本量适中（50-3000 词）
           C. 文本量大且数字占比 > 10%
+        如果所有页都提取不到文本（可能是扫描件），则返回全部页面。
         返回：页码列表（从 0 开始，用于后续 pypdfium2 渲染）
         """
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        total_pages = len(doc)
         target_pages = []
+        total_text_length = 0  # 统计全文可提取文本总长度
 
         # 合同相关关键词
         keywords = [
@@ -98,11 +101,12 @@ Instructions:
             "Schedule", "Total", "Balance", "Quantity", "Unit Price", "Amount",
         ]
 
-        for page_num in range(len(doc)):
+        for page_num in range(total_pages):
             page = doc[page_num]
             text = page.get_text()
             words = page.get_text("words")
             word_count = len(words)
+            total_text_length += len(text.strip())
 
             # 检测表格
             tables = page.find_tables()
@@ -128,12 +132,13 @@ Instructions:
 
         doc.close()
 
-        # 如果没筛到任何页，降级为所有页
+        # 如果没筛到任何页，说明可能是扫描件或全文无文本，降级为全部页面
         if not target_pages:
-            logger.warning("[WARN] 未筛选到目标页，将使用全部页面")
-            target_pages = list(range(len(doc)))
-            doc2 = fitz.open(stream=pdf_bytes, filetype="pdf")
-            doc2.close()
+            logger.warning(
+                f"[WARN] 未筛选到目标页 (总页数: {total_pages}, 全文文本: {total_text_length} 字符), "
+                f"可能是扫描件PDF, 将使用全部页面"
+            )
+            target_pages = list(range(total_pages))
 
         return target_pages
 

@@ -24,16 +24,16 @@
             </div>
 
             <div class="equipment-grid">
-              <FormField label="使用单位号" required><input type="text" v-model="eq.lydwh" placeholder="请输入" /></FormField>
+              <FormField label="使用单位号"><input type="text" v-model="eq.lydwh" placeholder="请输入" /></FormField>
               <FormField label="使用单位名"><input type="text" v-model="eq.lydwm" placeholder="请输入" /></FormField>
-              <FormField label="设备编号区间" required><input type="text" v-model="eq.zcbhqj" placeholder="请输入" /></FormField>
-              <FormField label="分类号" required><input type="text" v-model="eq.zcflh" placeholder="请输入" /></FormField>
-              <FormField label="设备名称" required><input type="text" v-model="eq.zcmc" placeholder="请输入" /></FormField>
+              <FormField label="设备编号区间"><input type="text" v-model="eq.zcbhqj" placeholder="请输入" /></FormField>
+              <FormField label="分类号"><input type="text" v-model="eq.zcflh" placeholder="请输入" /></FormField>
+              <FormField label="设备名称"><input type="text" v-model="eq.zcmc" placeholder="请输入" /></FormField>
               <FormField label="品牌型号"><input type="text" v-model="eq.ppxh" placeholder="无则填 *" /></FormField>
               <FormField label="规格"><input type="text" v-model="eq.gg" placeholder="无则填 *" /></FormField>
               <FormField label="数量"><input type="number" v-model.number="eq.sl" min="0" /></FormField>
               <FormField label="单价(元)"><input type="number" v-model.number="eq.dj" step="0.01" min="0" @input="calcJe(eq)" /></FormField>
-              <FormField label="金额(元)" required><input type="number" v-model.number="eq.je" step="0.01" min="0" /></FormField>
+              <FormField label="金额(元)"><input type="number" v-model.number="eq.je" step="0.01" min="0" /></FormField>
               <FormField label="计量单位">
                 <select v-model="eq.jldw">
                   <option value="台">台</option>
@@ -43,7 +43,7 @@
                 </select>
               </FormField>
               <FormField label="厂家"><input type="text" v-model="eq.cj" placeholder="无则填 无" /></FormField>
-              <FormField label="购置日期" required><input type="date" v-model="eq.ggrq" /></FormField>
+              <FormField label="购置日期"><input type="date" v-model="eq.ggrq" /></FormField>
             </div>
           </div>
         </div>
@@ -130,17 +130,6 @@ export default {
     }
 
     function confirmSave() {
-      for (let i = 0; i < equipments.value.length; i++) {
-        const eq = equipments.value[i]
-        if (!eq.lydwh) return alert(`设备 ${i + 1}：使用单位号不能为空`)
-        if (!eq.zcbhqj) return alert(`设备 ${i + 1}：设备编号区间不能为空`)
-        if (!eq.zcflh) return alert(`设备 ${i + 1}：分类号不能为空`)
-        if (!eq.zcmc) return alert(`设备 ${i + 1}：设备名称不能为空`)
-        if (!eq.je && eq.je !== 0) return alert(`设备 ${i + 1}：金额不能为空`)
-        if (!eq.ggrq) return alert(`设备 ${i + 1}：购置日期不能为空`)
-      }
-
-      // 去掉 _key 后回传
       const payload = equipments.value.map(e => {
         const { _key, ...rest } = e
         return rest
